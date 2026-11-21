@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -97,6 +98,9 @@
                             <input type="file" accept=".json" onchange="importData(event); toggleDataMenu();" class="hidden">
                         </label>
                         <div class="my-1 border-t border-slate-200 dark:border-darkborder"></div>
+                        <button onclick="openResetStatsModal(); toggleDataMenu();" class="w-full px-4 py-2.5 text-left text-xs font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 flex items-center gap-2.5">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> İstatistikleri Sıfırla
+                        </button>
                         <button onclick="resetAllData(); toggleDataMenu();" class="w-full px-4 py-2.5 text-left text-xs font-medium text-rose-500 hover:bg-rose-500/10 flex items-center gap-2.5">
                             <i data-lucide="trash-2" class="w-4 h-4"></i> Tüm Verileri Sıfırla
                         </button>
@@ -130,7 +134,7 @@
         <div id="recurring-banner" class="hidden rounded-2xl bg-amber-500/10 border border-amber-500/25 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div class="flex items-center gap-2.5 text-xs sm:text-sm text-amber-800 dark:text-amber-300">
                 <i data-lucide="repeat" class="w-4 h-4 shrink-0 text-amber-500"></i>
-                <span id="recurring-banner-text">Bu dönem henüz işlenmemiş sabit ödemeleriniz bulunuyor.</span>
+                <span id="recurring-banner-text">Bu dönem henüz işlenmemiş sabit gelir/giderleriniz bulunuyor.</span>
             </div>
             <button onclick="processAllDueRecurring()" class="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shrink-0 transition-colors">
                 Hepsini İşle
@@ -224,6 +228,52 @@
             </div>
         </section>
 
+        <!-- Sabit Gelir & Sabit Gider Kutusu -->
+        <section class="bg-white dark:bg-darkcard rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-darkborder shadow-sm">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
+                        <i data-lucide="repeat" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm sm:text-base font-bold">Aylık Sabit Gelir & Sabit Gider Özeti</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Her ay düzenli tekrarlayan gelir ve giderlerinizin toplamı</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 flex-1 lg:max-w-2xl">
+                    <!-- Sabit Gelir -->
+                    <div class="px-3.5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+                        <div>
+                            <div class="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">Sabit Gelir</div>
+                            <div class="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400" id="stat-fixed-income">₺0,00</div>
+                        </div>
+                        <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" id="stat-fixed-income-count">0</span>
+                    </div>
+
+                    <!-- Sabit Gider -->
+                    <div class="px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between">
+                        <div>
+                            <div class="text-[11px] font-medium text-rose-700 dark:text-rose-300">Sabit Gider</div>
+                            <div class="text-sm sm:text-base font-bold text-rose-600 dark:text-rose-400" id="stat-fixed-expense">₺0,00</div>
+                        </div>
+                        <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400" id="stat-fixed-expense-count">0</span>
+                    </div>
+
+                    <!-- Sabit Net Fark -->
+                    <div class="px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg border border-slate-200/80 dark:border-darkborder flex items-center justify-between">
+                        <div>
+                            <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Sabit Net Fark</div>
+                            <div class="text-sm sm:text-base font-bold" id="stat-fixed-net">₺0,00</div>
+                        </div>
+                        <button onclick="openRecurringModal()" title="Yeni Sabit Gelir / Gider Ekle" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1 transition-colors">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ekle
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Sekme Navigasyonu -->
         <nav class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
             <button onclick="switchTab('overview')" data-tab="overview" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 text-white shadow-sm flex items-center gap-2 shrink-0 transition-all">
@@ -248,11 +298,15 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Grafik Kartı -->
                 <div class="lg:col-span-2 bg-white dark:bg-darkcard rounded-2xl p-5 border border-slate-200/80 dark:border-darkborder shadow-sm">
-                    <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center justify-between gap-2 mb-4">
                         <div>
                             <h2 class="text-base font-bold">6 Aylık Gelir & Gider Dengesi</h2>
                             <p class="text-xs text-slate-500 dark:text-slate-400">Aylık nakit giriş ve çıkışlarınızın karşılaştırması</p>
                         </div>
+                        <button onclick="openResetStatsModal()" title="Gelir & Gider İstatistiklerini Sıfırla" class="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                            <span>İstatistikleri Sıfırla</span>
+                        </button>
                     </div>
                     <div class="relative h-64 w-full">
                         <canvas id="cashflowChart"></canvas>
@@ -300,9 +354,14 @@
                     <h2 class="text-lg font-bold">Kredi Kartlarım & Taksitler</h2>
                     <p class="text-xs text-slate-500 dark:text-slate-400">Dönem borcu, kullanılabilir limit ve toplam kart borcu takibi</p>
                 </div>
-                <button onclick="openModal('modal-card')" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-indigo-500/20 flex items-center gap-2 self-start sm:self-auto">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Yeni Kredi Kartı Ekle
-                </button>
+                <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                    <button onclick="openStatementModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-colors">
+                        <i data-lucide="scan-line" class="w-4 h-4"></i> Ekstre Yükle (Fotoğraf / Excel)
+                    </button>
+                    <button onclick="openModal('modal-card')" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-indigo-500/20 flex items-center gap-2 transition-colors">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Yeni Kredi Kartı Ekle
+                    </button>
+                </div>
             </div>
 
             <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -384,12 +443,12 @@
                     </div>
                 </div>
 
-                <!-- Tekrarlayan Sabit Ödemeler -->
+                <!-- Tekrarlayan Sabit Gelir & Giderler -->
                 <div class="bg-white dark:bg-darkcard rounded-2xl p-5 border border-slate-200/80 dark:border-darkborder shadow-sm space-y-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="text-base font-bold">Sabit / Tekrarlayan Ödemeler</h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Kira, fatura ve abonelikler için aylık şablonlar</p>
+                            <h3 class="text-base font-bold">Sabit Gelir & Giderler</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Maaş, kira, fatura ve abonelikler için aylık şablonlar</p>
                         </div>
                         <button onclick="openRecurringModal()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5">
                             <i data-lucide="plus" class="w-4 h-4"></i> Sabit Ekle
@@ -415,6 +474,9 @@
                         <option value="current">Aktif Bütçe Dönemi</option>
                         <option value="all">Tüm Zamanlar</option>
                     </select>
+                    <button onclick="openStatementModal()" class="px-3 py-2 rounded-xl bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-1.5 transition-colors">
+                        <i data-lucide="scan-line" class="w-3.5 h-3.5"></i> Ekstre Aktar (Foto / Excel)
+                    </button>
                 </div>
                 <div class="relative flex-1 sm:max-w-xs">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
@@ -705,24 +767,34 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">1 Gram Altın (₺)</label>
-                    <input type="number" step="0.01" min="0.1" id="input-rate-gau" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-sm font-bold focus:outline-none">
+                    <input type="number" step="0.01" min="1" id="input-rate-gau" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-sm font-bold focus:outline-none">
                 </div>
                 <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold">Kurları Kaydet</button>
             </form>
         </div>
     </div>
 
-    <!-- 8. Sabit Ödeme Şablonu Modalı -->
+    <!-- 8. Sabit Gelir / Gider Şablonu Modalı -->
     <div id="modal-recurring" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop">
         <div class="bg-white dark:bg-darkcard w-full max-w-md rounded-3xl p-6 border border-slate-200 dark:border-darkborder shadow-2xl modal-panel">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold">Yeni Sabit Ödeme Ekle</h3>
+                <h3 class="text-lg font-bold">Yeni Sabit Gelir / Gider Ekle</h3>
                 <button onclick="closeModal('modal-recurring')" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <form onsubmit="handleRecurringSubmit(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-darkbg">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="rec-type" value="expense" checked onchange="updateRecurringCategoryOptions()" class="peer hidden">
+                        <div class="py-2 text-center text-xs font-bold rounded-lg peer-checked:bg-rose-500 peer-checked:text-white text-slate-500 transition-all">Sabit Gider (- ₺)</div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="rec-type" value="income" onchange="updateRecurringCategoryOptions()" class="peer hidden">
+                        <div class="py-2 text-center text-xs font-bold rounded-lg peer-checked:bg-emerald-500 peer-checked:text-white text-slate-500 transition-all">Sabit Gelir (+ ₺)</div>
+                    </label>
+                </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Ödeme Adı</label>
-                    <input type="text" id="rec-title" required placeholder="Örn: Ev Kirası, Fiber İnternet, Spotify" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-sm focus:outline-none">
+                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">İşlem Adı</label>
+                    <input type="text" id="rec-title" required placeholder="Örn: Aylık Maaş, Ev Kirası, Fiber İnternet" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-sm focus:outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -730,7 +802,7 @@
                         <input type="number" step="0.01" min="1" id="rec-amount" required placeholder="15000" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-sm font-bold focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Ödeme Günü (Ayın)</label>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">İşlem Günü (Ayın)</label>
                         <input type="number" min="1" max="31" id="rec-day" required placeholder="5" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-sm font-semibold focus:outline-none">
                     </div>
                 </div>
@@ -739,7 +811,7 @@
                         <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Kategori</label>
                         <select id="rec-category" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-xs font-semibold focus:outline-none"></select>
                     </div>
-                    <div>
+                    <div id="rec-payment-method-group">
                         <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Ödeme Yöntemi</label>
                         <select id="rec-payment-method" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-xs font-semibold focus:outline-none">
                             <option value="cash">Nakit / Hesap</option>
@@ -754,20 +826,165 @@
     <!-- 9. Maaş Günü Döngüsü Modalı -->
     <div id="modal-cycle" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop">
         <div class="bg-white dark:bg-darkcard w-full max-w-sm rounded-3xl p-6 border border-slate-200 dark:border-darkborder shadow-2xl modal-panel">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold">Bütçe Döngü Günü</h3>
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h3 class="text-lg font-bold">Maaş Günü & Bütçe Döngüsü</h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Takvimden maaş gününüze dokunun</p>
+                </div>
                 <button onclick="closeModal('modal-cycle')" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <form onsubmit="handleCycleSubmit(event)" class="space-y-4">
-                <p class="text-xs text-slate-500 dark:text-slate-400">
-                    Gelir ve gider özetlerinizin her ayın kaçında sıfırlanıp yeni döneme başlayacağını seçin (Örn: Maaş gününüz 15'i ise 15 yazın).
-                </p>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Ayın Başlangıç Günü (1 - 28)</label>
-                    <input type="number" min="1" max="28" id="input-cycle-day" required value="1" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-base font-bold focus:outline-none">
+                <input type="hidden" id="input-cycle-day" value="1">
+                
+                <!-- İnteraktif Takvim Izgarası -->
+                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-darkbg border border-slate-200/70 dark:border-darkborder">
+                    <div class="flex items-center justify-between mb-2.5 px-1">
+                        <span id="cycle-calendar-month" class="text-xs font-bold text-indigo-500">Kasım 2026</span>
+                        <button type="button" onclick="selectCycleDay('last')" class="px-2 py-0.5 rounded-md bg-indigo-500/15 hover:bg-indigo-500/25 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 transition-colors">
+                            Ayın Son Günü Seç
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-400 mb-1.5">
+                        <span>Pzt</span><span>Sal</span><span>Çar</span><span>Per</span><span>Cum</span><span>Cmt</span><span>Paz</span>
+                    </div>
+                    <div id="cycle-calendar-grid" class="grid grid-cols-7 gap-1">
+                        <!-- JS ile anlık takvim günleri oluşturulacak -->
+                    </div>
                 </div>
-                <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold">Döngüyü Güncelle</button>
+
+                <div class="p-3 rounded-xl bg-indigo-500/10 text-xs text-indigo-600 dark:text-indigo-300 space-y-1">
+                    <div class="flex justify-between">
+                        <span>Seçilen Maaş Günü:</span>
+                        <strong id="cycle-selected-label">Ayın Son Günü</strong>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Aktif Bütçe Dönemi:</span>
+                        <strong id="cycle-preview-range">-</strong>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 transition-all">Döngüyü Kaydet</button>
             </form>
+        </div>
+    </div>
+
+    <!-- 10. Kredi Kartı Ekstresi İçe Aktarma Modalı (Fotoğraf & Excel) -->
+    <div id="modal-statement" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop">
+        <div class="bg-white dark:bg-darkcard w-full max-w-3xl rounded-3xl p-6 border border-slate-200 dark:border-darkborder shadow-2xl modal-panel max-h-[92vh] flex flex-col">
+            <div class="flex items-center justify-between mb-4 shrink-0">
+                <div>
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i data-lucide="scan-line" class="w-5 h-5 text-emerald-500"></i>
+                        Kredi Kartı Ekstresi Yükle (Fotoğraf / Excel)
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Ekstre fotoğrafından veya Excel dosyasından harcamalar otomatik okunur ve kategorize edilir</p>
+                </div>
+                <button onclick="closeModal('modal-statement')" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="space-y-4 overflow-y-auto pr-1 flex-1">
+                <!-- Kart Seçimi ve Dosya / Fotoğraf Yükleme Alanı -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Hangi Kredi Kartı?</label>
+                        <select id="stmt-card-select" class="w-full px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-darkbg text-xs font-semibold focus:outline-none h-[40px]">
+                            <option value="cash">Kart Seçmeden İçe Aktar</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Fotoğraf / Ekran Görüntüsü</label>
+                        <label class="w-full px-3 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-dashed border-indigo-500/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors h-[40px]">
+                            <i data-lucide="camera" class="w-4 h-4 shrink-0"></i>
+                            <span id="stmt-image-label" class="truncate">Fotoğraf Seç / Çek</span>
+                            <input type="file" id="stmt-image-input" accept="image/*" onchange="handleStatementImageUpload(event)" class="hidden">
+                        </label>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Excel / CSV Dosyası</label>
+                        <label class="w-full px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-dashed border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors h-[40px]">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4 shrink-0"></i>
+                            <span id="stmt-file-label" class="truncate">.xlsx / .csv Seç</span>
+                            <input type="file" id="stmt-file-input" accept=".xlsx,.xls,.csv" onchange="handleStatementFileUpload(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Yüklenen Fotoğraf Önizlemesi & Yükleniyor Göstergesi -->
+                <div id="stmt-image-preview-box" class="hidden rounded-2xl bg-slate-100/80 dark:bg-darkbg border border-slate-200/80 dark:border-darkborder p-3 flex items-center gap-3">
+                    <img id="stmt-image-thumb" alt="Ekstre Önizleme" class="w-16 h-16 object-cover rounded-xl border border-slate-300 dark:border-slate-700 shrink-0">
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold truncate" id="stmt-image-filename">Ekstre Fotoğrafı</div>
+                        <div id="stmt-ocr-status" class="text-[11px] text-indigo-500 font-medium flex items-center gap-1.5 mt-1">
+                            <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                            <span>Ekstre görüntüsü analiz ediliyor...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seçenekler -->
+                <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 dark:bg-darkbg border border-slate-200/70 dark:border-darkborder text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="stmt-update-card-debt" class="rounded text-indigo-600 focus:ring-0">
+                        <span>Seçili harcamaları kart borcuna da ekle (Ekstre zaten kart borcuna dahilse kapalı tutun)</span>
+                    </label>
+                    <span id="stmt-summary-badge" class="font-bold text-indigo-500 hidden">0 Harcama Bulundu</span>
+                </div>
+
+                <!-- Tespit Edilen Sürekli / Tekrarlayan Harcamalar -->
+                <div id="stmt-recurring-box" class="hidden rounded-2xl bg-amber-500/10 border border-amber-500/25 p-4 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-300">
+                            <i data-lucide="repeat" class="w-4 h-4 text-amber-500"></i>
+                            <span>Tespit Edilen Sürekli / Tekrarlayan Harcamalar</span>
+                        </div>
+                        <span class="text-[11px] text-amber-600/80 dark:text-amber-400/80">İşaretliler "Sabit Giderler"e kaydedilir</span>
+                    </div>
+                    <div id="stmt-recurring-candidates" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <!-- JS ile doldurulacak -->
+                    </div>
+                </div>
+
+                <!-- Kategorize Edilmiş Harcama Tablosu -->
+                <div id="stmt-preview-container" class="hidden border border-slate-200/80 dark:border-darkborder rounded-2xl overflow-hidden">
+                    <div class="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800" id="stmt-items-list">
+                        <!-- JS ile doldurulacak -->
+                    </div>
+                </div>
+
+                <div id="stmt-empty-hint" class="py-10 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-darkborder rounded-2xl">
+                    Banka uygulamanızdan aldığınız <strong>ekstre ekran görüntüsünü / fotoğrafını</strong> veya <strong>Excel (.xlsx / .csv)</strong> dosyasını yükleyin.<br>
+                    Tarih, açıklama ve tutarlar otomatik okunarak kategorize edilir ve sürekli ödemeleriniz tespit edilir.
+                </div>
+            </div>
+
+            <div class="pt-4 mt-4 border-t border-slate-200/80 dark:border-darkborder flex items-center justify-end gap-2 shrink-0">
+                <button type="button" onclick="closeModal('modal-statement')" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-xs font-semibold">Vazgeç</button>
+                <button type="button" id="btn-confirm-statement" onclick="confirmStatementImport()" disabled class="px-5 py-2.5 rounded-xl bg-indigo-600 disabled:opacity-40 hover:bg-indigo-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all">
+                    Harcamaları & Sürekli Giderleri Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 11. İstatistikleri Sıfırla Onay Modalı -->
+    <div id="modal-reset-stats" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop">
+        <div class="bg-white dark:bg-darkcard w-full max-w-sm rounded-3xl p-6 border border-slate-200 dark:border-darkborder shadow-2xl modal-panel space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="text-base font-bold">İstatistikleri Sıfırla</h3>
+                </div>
+                <button onclick="closeModal('modal-reset-stats')" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Tüm <strong>gelir-gider hareketleri</strong> ve <strong>6 aylık nakit akışı grafiği</strong> sıfırlanacaktır. Kredi kartlarınız, borçlarınız, varlıklarınız ve sabit şablonlarınız korunur.
+            </p>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" onclick="closeModal('modal-reset-stats')" class="py-2.5 rounded-xl bg-slate-100 dark:bg-darkbg text-xs font-semibold">Vazgeç</button>
+                <button type="button" onclick="confirmResetStatistics()" class="py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 transition-colors">Evet, Sıfırla</button>
+            </div>
         </div>
     </div>
 
@@ -810,10 +1027,12 @@
 
         let isPrivacyMode = false;
         let cashflowChartInstance = null;
+        let parsedStatementItems = [];
+        let detectedRecurringCandidates = [];
 
         let appState = {
             isDemo: true,
-            cycleStartDay: 1,
+            cycleStartDay: 'last',
             rates: { TRY: 1, USD: 34.50, EUR: 37.20, GAU: 3050.00, lastUpdated: null },
             cards: [],
             installments: [],
@@ -940,7 +1159,7 @@
                     const parsed = JSON.parse(raw);
                     appState = {
                         isDemo: Boolean(parsed.isDemo),
-                        cycleStartDay: Number(parsed.cycleStartDay) || 1,
+                        cycleStartDay: parsed.cycleStartDay === 'last' ? 'last' : (Number(parsed.cycleStartDay) || 'last'),
                         rates: { TRY: 1, USD: 34.50, EUR: 37.20, GAU: 3050.00, ...(parsed.rates || {}) },
                         cards: Array.isArray(parsed.cards) ? parsed.cards : [],
                         installments: Array.isArray(parsed.installments) ? parsed.installments : [],
@@ -970,7 +1189,7 @@
 
             appState = {
                 isDemo: true,
-                cycleStartDay: 1,
+                cycleStartDay: 'last',
                 rates: { TRY: 1, USD: 34.50, EUR: 37.20, GAU: 3050.00, lastUpdated: null },
                 cards: [
                     {
@@ -1012,8 +1231,9 @@
                     { id: generateId(), name: 'Gram Altın', type: 'GAU', amount: 8.5 }
                 ],
                 recurring: [
-                    { id: generateId(), title: 'Ev Kirası', amount: 16500, day: 5, category: 'Kira & Aidat', paymentMethod: 'cash', lastProcessedPeriod: getCurrentPeriodKey(1) },
-                    { id: generateId(), title: 'Fiber İnternet & Mobil', amount: 890, day: 12, category: 'Faturalar & Abonelik', paymentMethod: card1Id, lastProcessedPeriod: null }
+                    { id: generateId(), type: 'income', title: 'Aylık Maaş', amount: 52000, day: 30, category: 'Maaş', paymentMethod: 'cash', lastProcessedPeriod: getCurrentPeriodKey('last') },
+                    { id: generateId(), type: 'expense', title: 'Ev Kirası', amount: 16500, day: 5, category: 'Kira & Aidat', paymentMethod: 'cash', lastProcessedPeriod: getCurrentPeriodKey('last') },
+                    { id: generateId(), type: 'expense', title: 'Fiber İnternet & Mobil', amount: 890, day: 12, category: 'Faturalar & Abonelik', paymentMethod: card1Id, lastProcessedPeriod: null }
                 ],
                 transactions: [
                     { id: generateId(), type: 'income', amount: 52000, category: 'Maaş', desc: 'Aylık Maaş Ödemesi', date: `${y}-${m}-01`, paymentMethod: 'cash' },
@@ -1030,7 +1250,7 @@
         function clearDemoData() {
             appState = {
                 isDemo: false,
-                cycleStartDay: appState.cycleStartDay || 1,
+                cycleStartDay: appState.cycleStartDay || 'last',
                 rates: appState.rates,
                 cards: [],
                 installments: [],
@@ -1049,6 +1269,23 @@
             seedDemoData();
             renderAll();
             showToast('Uygulama varsayılan verilere sıfırlandı.');
+        }
+
+        function openResetStatsModal() {
+            openModal('modal-reset-stats');
+            lucide.createIcons();
+        }
+
+        function confirmResetStatistics() {
+            appState.isDemo = false;
+            appState.transactions = [];
+            appState.recurring.forEach(r => {
+                r.lastProcessedPeriod = null;
+            });
+            saveState();
+            renderAll();
+            closeModal('modal-reset-stats');
+            showToast('Gelir ve gider istatistikleri sıfırlandı.');
         }
 
         // ================= CANLI KUR ÇEKME =================
@@ -1100,26 +1337,44 @@
 
         // ================= BÜTÇE DÖNGÜSÜ & TARİH HESAPLARI =================
 
-        function getActiveCycleRange(cycleDay = appState.cycleStartDay || 1) {
+        function getLastDayOfMonth(year, month) {
+            return new Date(year, month + 1, 0).getDate();
+        }
+
+        function resolveCycleStartForMonth(year, month, cycleDay) {
+            const lastDay = getLastDayOfMonth(year, month);
+            const targetDay = cycleDay === 'last' ? lastDay : Math.min(lastDay, Math.max(1, Number(cycleDay) || 1));
+            return new Date(year, month, targetDay, 0, 0, 0);
+        }
+
+        function getActiveCycleRange(cycleDay = appState.cycleStartDay || 'last') {
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
-            const day = now.getDate();
+            const today = new Date(year, month, now.getDate(), 12, 0, 0);
 
-            let start, end;
-            if (day >= cycleDay) {
-                start = new Date(year, month, cycleDay, 0, 0, 0);
-                end = new Date(year, month + 1, cycleDay - 1, 23, 59, 59);
+            const currentMonthStart = resolveCycleStartForMonth(year, month, cycleDay);
+            let start, nextStart;
+
+            if (today >= currentMonthStart) {
+                start = currentMonthStart;
+                nextStart = resolveCycleStartForMonth(year, month + 1, cycleDay);
             } else {
-                start = new Date(year, month - 1, cycleDay, 0, 0, 0);
-                end = new Date(year, month, cycleDay - 1, 23, 59, 59);
+                start = resolveCycleStartForMonth(year, month - 1, cycleDay);
+                nextStart = currentMonthStart;
             }
+
+            const end = new Date(nextStart.getFullYear(), nextStart.getMonth(), nextStart.getDate() - 1, 23, 59, 59);
             return { start, end };
         }
 
-        function getCurrentPeriodKey(cycleDay = appState.cycleStartDay || 1) {
+        function getCurrentPeriodKey(cycleDay = appState.cycleStartDay || 'last') {
             const { start } = getActiveCycleRange(cycleDay);
             return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatCycleDayLabel(cycleDay = appState.cycleStartDay || 'last') {
+            return cycleDay === 'last' ? 'Ayın Son Günü' : `Her ayın ${cycleDay}'i`;
         }
 
         function getDaysUntilDayOfMonth(targetDay) {
@@ -1291,15 +1546,640 @@
         }
 
         function openRecurringModal() {
-            const select = document.getElementById('rec-category');
-            select.innerHTML = EXPENSE_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+            const expRadio = document.querySelector('input[name="rec-type"][value="expense"]');
+            if (expRadio) expRadio.checked = true;
+            updateRecurringCategoryOptions();
             populatePaymentMethodSelect('rec-payment-method');
             openModal('modal-recurring');
         }
 
+        function updateRecurringCategoryOptions() {
+            const typeInput = document.querySelector('input[name="rec-type"]:checked');
+            const type = typeInput ? typeInput.value : 'expense';
+            const select = document.getElementById('rec-category');
+            const list = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+            select.innerHTML = list.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            const pmGroup = document.getElementById('rec-payment-method-group');
+            if (pmGroup) {
+                pmGroup.style.display = type === 'expense' ? 'block' : 'none';
+            }
+        }
+
         function openCycleModal() {
-            document.getElementById('input-cycle-day').value = appState.cycleStartDay || 1;
+            const currentDay = appState.cycleStartDay || 'last';
+            selectCycleDay(currentDay);
             openModal('modal-cycle');
+        }
+
+        // ================= EXCEL EKSTRE YÜKLEME & OTOMATİK KATEGORİZASYON =================
+
+        const CATEGORY_KEYWORDS = [
+            { category: 'Market & Gıda', words: ['migros', 'bim', 'a101', 'şok', 'sok market', 'carrefour', 'file market', 'macro', 'getir', 'yemeksepeti market', 'iste gelsin', 'kasap', 'manav', 'fırın', 'firin', 'bakkal', 'supermarket', 'süpermarket'] },
+            { category: 'Faturalar & Abonelik', words: ['netflix', 'spotify', 'youtube', 'disney', 'amazon prime', 'blutv', 'exxen', 'gain', 'apple.com', 'icloud', 'google', 'turkcell', 'vodafone', 'türk telekom', 'turk telekom', 'superonline', 'ttnet', 'millenicom', 'turknet', 'igdaş', 'igdas', 'iski', 'enerjisa', 'ck boğaziçi', 'edaş', 'edas', 'fatura', 'abonelik'] },
+            { category: 'Yeme & İçme', words: ['starbucks', 'kahve dünyası', 'kahve dunyasi', 'espresso', 'burger', 'mcdonald', 'kfc', 'popeyes', 'dominos', 'little caesars', 'yemeksepeti', 'trendyol yemek', 'getir yemek', 'restoran', 'restaurant', 'cafe', 'kafe', 'kebap', 'pide', 'lahmacun', 'döner', 'doner', 'lokanta', 'pastane'] },
+            { category: 'Ulaşım & Akaryakıt', words: ['opet', 'shell', 'bp ', 'petrol ofisi', 'total', 'aytemiz', 'tp ', 'akaryakıt', 'akaryakit', 'benzin', 'otopark', 'ispark', 'hgs', 'ogs', 'istanbulkart', 'uber', 'bitaksi', 'martı', 'marti', 'thy', 'türk hava', 'pegasus', 'anadolujet', 'sunexpress', 'obilet', 'taksi'] },
+            { category: 'Giyim & Alışveriş', words: ['trendyol', 'hepsiburada', 'amazon', 'n11', 'çiçeksepeti', 'ciceksepeti', 'zara', 'lcw', 'lc waikiki', 'defacto', 'koton', 'mavi', 'boyner', 'bershka', 'pull&bear', 'stradivarius', 'decathlon', 'flo ', 'ayakkabı', 'giyim', 'ikea', 'koçtaş', 'tekzen', 'teknosa', 'mediamarkt', 'vatan bilgisayar'] },
+            { category: 'Sağlık & Spor', words: ['eczane', 'hastane', 'klinik', 'diş', 'optik', 'macfit', 'spor', 'fitness', 'pilates', 'sağlık', 'medikal', 'acıbadem', 'memorial', 'medical park'] },
+            { category: 'Kira & Aidat', words: ['kira', 'aidat', 'site yönetimi', 'apartman'] }
+        ];
+
+        const SUBSCRIPTION_HINTS = ['netflix', 'spotify', 'youtube', 'disney', 'amazon prime', 'blutv', 'exxen', 'gain', 'icloud', 'apple.com', 'turkcell', 'vodafone', 'türk telekom', 'turk telekom', 'superonline', 'turknet', 'igdaş', 'iski', 'enerjisa', 'macfit', 'aidat', 'kira'];
+
+        function classifyExpenseDescription(desc) {
+            const lower = (desc || '').toLocaleLowerCase('tr-TR');
+            for (const group of CATEGORY_KEYWORDS) {
+                if (group.words.some(w => lower.includes(w))) {
+                    return group.category;
+                }
+            }
+            return 'Diğer Gider';
+        }
+
+        function normalizeMerchantName(desc) {
+            return (desc || '')
+                .replace(/\d+\/\d+\s*taksit/gi, '')
+                .replace(/\b\d{2,}\b/g, '')
+                .replace(/[*#\-\/\.]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function parseTurkishAmount(raw) {
+            if (typeof raw === 'number') return raw;
+            if (!raw) return 0;
+            let str = String(raw).trim();
+            if (!str) return 0;
+            // Borç ödemesi / iade gibi + veya alacak satırlarını ayırt et
+            const isCredit = str.includes('+') || /\b(alacak|iade|ödeme|odeme|teşekkür)\b/i.test(str);
+            str = str.replace(/[^\d,.-]/g, '');
+            if (!str) return 0;
+
+            if (str.includes(',') && str.includes('.')) {
+                if (str.lastIndexOf(',') > str.lastIndexOf('.')) {
+                    // 1.250,50 -> 1250.50
+                    str = str.replace(/\./g, '').replace(',', '.');
+                } else {
+                    // 1,250.50 -> 1250.50
+                    str = str.replace(/,/g, '');
+                }
+            } else if (str.includes(',')) {
+                str = str.replace(',', '.');
+            }
+            const val = parseFloat(str);
+            if (isNaN(val)) return 0;
+            return isCredit ? -Math.abs(val) : val;
+        }
+
+        function parseExcelDateCell(raw) {
+            if (!raw) return formatDateInput(new Date());
+            if (raw instanceof Date && !isNaN(raw)) {
+                return formatDateInput(raw);
+            }
+            if (typeof raw === 'number' && raw > 20000 && raw < 80000) {
+                const utcDays = Math.floor(raw - 25569);
+                const dateObj = new Date(utcDays * 86400 * 1000);
+                return formatDateInput(dateObj);
+            }
+            const str = String(raw).trim();
+            // GG.AA.YYYY veya GG/AA/YYYY
+            const trMatch = str.match(/(\d{1,2})[./-](\d{1,2})[./-](\d{4})/);
+            if (trMatch) {
+                const d = trMatch[1].padStart(2, '0');
+                const m = trMatch[2].padStart(2, '0');
+                const y = trMatch[3];
+                return `${y}-${m}-${d}`;
+            }
+            // YYYY-AA-GG
+            const isoMatch = str.match(/(\d{4})[./-](\d{1,2})[./-](\d{1,2})/);
+            if (isoMatch) {
+                return `${isoMatch[1]}-${isoMatch[2].padStart(2, '0')}-${isoMatch[3].padStart(2, '0')}`;
+            }
+            return formatDateInput(new Date());
+        }
+
+        function openStatementModal() {
+            parsedStatementItems = [];
+            detectedRecurringCandidates = [];
+            const select = document.getElementById('stmt-card-select');
+            let html = '<option value="cash">Kart Seçmeden İçe Aktar</option>';
+            appState.cards.forEach(c => {
+                html += `<option value="${c.id}">${c.name} (${c.bank})</option>`;
+            });
+            select.innerHTML = html;
+            if (appState.cards.length > 0) {
+                select.value = appState.cards[0].id;
+            }
+
+            document.getElementById('stmt-file-input').value = '';
+            document.getElementById('stmt-image-input').value = '';
+            document.getElementById('stmt-file-label').textContent = '.xlsx / .csv Seç';
+            document.getElementById('stmt-image-label').textContent = 'Fotoğraf Seç / Çek';
+            document.getElementById('stmt-image-preview-box').classList.add('hidden');
+            document.getElementById('stmt-update-card-debt').checked = false;
+            document.getElementById('stmt-summary-badge').classList.add('hidden');
+            document.getElementById('stmt-recurring-box').classList.add('hidden');
+            document.getElementById('stmt-preview-container').classList.add('hidden');
+            document.getElementById('stmt-empty-hint').classList.remove('hidden');
+            document.getElementById('btn-confirm-statement').disabled = true;
+
+            openModal('modal-statement');
+            lucide.createIcons();
+        }
+
+        function compressImageToBase64(file, maxDim = 1600) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let w = img.width;
+                        let h = img.height;
+                        if (w > maxDim || h > maxDim) {
+                            if (w > h) {
+                                h = Math.round((h * maxDim) / w);
+                                w = maxDim;
+                            } else {
+                                w = Math.round((w * maxDim) / h);
+                                h = maxDim;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                        resolve({
+                            dataUrl,
+                            base64: dataUrl.split(',')[1],
+                            mimeType: 'image/jpeg'
+                        });
+                    };
+                    img.onerror = reject;
+                    img.src = ev.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function fetchWithBackoff(url, options, maxRetries = 3) {
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                const res = await fetch(url, options);
+                if (res.ok) return res;
+                if (attempt === maxRetries) throw new Error(`HTTP ${res.status}`);
+                await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+            }
+        }
+
+        async function handleStatementImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('stmt-image-label').textContent = file.name;
+            document.getElementById('stmt-file-label').textContent = '.xlsx / .csv Seç';
+
+            const previewBox = document.getElementById('stmt-image-preview-box');
+            const thumbEl = document.getElementById('stmt-image-thumb');
+            const nameEl = document.getElementById('stmt-image-filename');
+            const statusEl = document.getElementById('stmt-ocr-status');
+            const emptyHint = document.getElementById('stmt-empty-hint');
+
+            try {
+                const { dataUrl, base64, mimeType } = await compressImageToBase64(file);
+                thumbEl.src = dataUrl;
+                nameEl.textContent = file.name;
+                previewBox.classList.remove('hidden');
+                emptyHint.classList.add('hidden');
+                statusEl.className = 'text-[11px] text-indigo-500 font-medium flex items-center gap-1.5 mt-1';
+                statusEl.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Ekstre fotoğrafı okunuyor ve harcamalar çıkarılıyor...</span>`;
+                lucide.createIcons();
+
+                const todayStr = formatDateInput(new Date());
+                const promptText = `Bu görüntü bir Türk bankasına ait kredi kartı ekstresi veya mobil bankacılık dönem içi harcamalar ekran görüntüsüdür.
+Görüntüdeki TÜM harcama satırlarını çıkar.
+Kurallar:
+- Borç ödemesi, dönem borcu, asgari ödeme, + alacak veya iade satırlarını DAHİL ETME, sadece harcamaları al.
+- Tarihi YYYY-MM-DD biçiminde ver (yıl görünmüyorsa ${todayStr.slice(0, 4)} yılını kullan).
+- Tutarı pozitif ondalıklı sayı (ör: 1250.50) olarak ver.
+- Kategoriyi şu listeden en uygun olanıyla seç: ${EXPENSE_CATEGORIES.join(', ')}.`;
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: promptText },
+                            { inlineData: { mimeType, data: base64 } }
+                        ]
+                    }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    date: { type: "STRING" },
+                                    desc: { type: "STRING" },
+                                    amount: { type: "NUMBER" },
+                                    category: { type: "STRING" }
+                                },
+                                required: ["date", "desc", "amount", "category"]
+                            }
+                        }
+                    }
+                };
+
+                const response = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+                const extracted = JSON.parse(rawJson);
+
+                parsedStatementItems = (Array.isArray(extracted) ? extracted : [])
+                    .filter(item => item && Number(item.amount) > 0 && item.desc)
+                    .map(item => {
+                        const validCat = EXPENSE_CATEGORIES.includes(item.category)
+                            ? item.category
+                            : classifyExpenseDescription(item.desc);
+                        return {
+                            id: generateId(),
+                            selected: true,
+                            date: parseExcelDateCell(item.date),
+                            desc: String(item.desc).trim(),
+                            amount: Number(Number(item.amount).toFixed(2)),
+                            category: validCat
+                        };
+                    });
+
+                statusEl.className = 'text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5 mt-1';
+                statusEl.innerHTML = `<i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i><span>Fotoğraftan ${parsedStatementItems.length} harcama başarıyla okundu.</span>`;
+                lucide.createIcons();
+
+                detectRecurringFromStatement(parsedStatementItems);
+                renderStatementPreview();
+            } catch (err) {
+                console.error('Fotoğraf ekstre okuma hatası:', err);
+                statusEl.className = 'text-[11px] text-rose-500 font-semibold flex items-center gap-1.5 mt-1';
+                statusEl.innerHTML = `<i data-lucide="alert-circle" class="w-3.5 h-3.5"></i><span>Fotoğraf okunamadı. Daha net bir ekran görüntüsü deneyin.</span>`;
+                lucide.createIcons();
+                showToast('Fotoğraf analiz edilemedi, tekrar deneyin.');
+            }
+        }
+
+        function handleStatementFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('stmt-file-label').textContent = file.name;
+            document.getElementById('stmt-image-label').textContent = 'Fotoğraf Seç / Çek';
+            document.getElementById('stmt-image-preview-box').classList.add('hidden');
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+
+                    extractTransactionsFromSheet(rows);
+                } catch (err) {
+                    console.error('Excel okuma hatası:', err);
+                    showToast('Excel dosyası okunamadı. Lütfen geçerli bir ekstre yükleyin.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function extractTransactionsFromSheet(rows) {
+            let headerIdx = -1;
+            let dateCol = -1;
+            let descCol = -1;
+            let amountCol = -1;
+
+            // Başlık satırını bul
+            for (let i = 0; i < Math.min(rows.length, 30); i++) {
+                const row = rows[i].map(cell => String(cell || '').toLocaleLowerCase('tr-TR').trim());
+                const dIdx = row.findIndex(c => c.includes('tarih') || c === 'date' || c.includes('işlem tarihi'));
+                const txtIdx = row.findIndex(c => c.includes('açıklama') || c.includes('aciklama') || c.includes('işlem') || c.includes('üye işyeri') || c.includes('merchant') || c.includes('description'));
+                const amtIdx = row.findIndex(c => c.includes('tutar') || c.includes('borç') || c.includes('miktar') || c.includes('amount') || c.includes('tl'));
+
+                if ((dIdx !== -1 || txtIdx !== -1) && amtIdx !== -1) {
+                    headerIdx = i;
+                    dateCol = dIdx !== -1 ? dIdx : 0;
+                    descCol = txtIdx !== -1 ? txtIdx : (dateCol === 0 ? 1 : 0);
+                    amountCol = amtIdx;
+                    break;
+                }
+            }
+
+            // Başlık bulunamadıysa sütun tiplerinden tahmin et
+            if (headerIdx === -1) {
+                headerIdx = 0;
+                dateCol = 0;
+                descCol = 1;
+                amountCol = rows[0] && rows[0].length > 2 ? 2 : 1;
+            }
+
+            const items = [];
+            for (let i = headerIdx + 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+
+                const rawDesc = String(row[descCol] || '').trim();
+                if (!rawDesc || rawDesc.length < 2) continue;
+
+                // Ekstre özet veya ödeme satırlarını atla
+                const lowerDesc = rawDesc.toLocaleLowerCase('tr-TR');
+                if (lowerDesc.includes('dönem borcu') || lowerDesc.includes('asgari ödeme') || lowerDesc.includes('toplam borç') || lowerDesc.includes('kk borç ödeme') || lowerDesc.includes('internet şube ödeme')) {
+                    continue;
+                }
+
+                let amount = parseTurkishAmount(row[amountCol]);
+                // Eğer tutar sütunu boşsa satırdaki diğer sayısal sütunlara bak
+                if (amount === 0) {
+                    for (let c = 0; c < row.length; c++) {
+                        if (c === dateCol || c === descCol) continue;
+                        const candidateAmt = parseTurkishAmount(row[c]);
+                        if (candidateAmt > 0) {
+                            amount = candidateAmt;
+                            break;
+                        }
+                    }
+                }
+
+                if (amount <= 0) continue;
+
+                const dateStr = parseExcelDateCell(row[dateCol]);
+                const category = classifyExpenseDescription(rawDesc);
+
+                items.push({
+                    id: generateId(),
+                    selected: true,
+                    date: dateStr,
+                    desc: rawDesc,
+                    amount: Number(amount.toFixed(2)),
+                    category
+                });
+            }
+
+            parsedStatementItems = items;
+            detectRecurringFromStatement(items);
+            renderStatementPreview();
+        }
+
+        function detectRecurringFromStatement(items) {
+            const groups = {};
+            items.forEach(item => {
+                const norm = normalizeMerchantName(item.desc);
+                const key = norm.toLocaleLowerCase('tr-TR');
+                if (!key || key.length < 3) return;
+                if (!groups[key]) {
+                    groups[key] = {
+                        title: norm,
+                        count: 0,
+                        totalAmount: 0,
+                        lastAmount: item.amount,
+                        category: item.category,
+                        day: parseLocalDate(item.date).getDate()
+                    };
+                }
+                groups[key].count += 1;
+                groups[key].totalAmount += item.amount;
+                groups[key].lastAmount = item.amount;
+            });
+
+            const existingTitles = appState.recurring.map(r => r.title.toLocaleLowerCase('tr-TR'));
+            const candidates = [];
+
+            Object.entries(groups).forEach(([key, g]) => {
+                const isKnownSub = SUBSCRIPTION_HINTS.some(h => key.includes(h));
+                const isRepeatedInHistory = appState.transactions.some(t => t.type === 'expense' && normalizeMerchantName(t.desc).toLocaleLowerCase('tr-TR') === key);
+
+                if (g.count >= 2 || isKnownSub || isRepeatedInHistory) {
+                    const alreadySaved = existingTitles.some(et => et.includes(key) || key.includes(et));
+                    candidates.push({
+                        id: generateId(),
+                        selected: !alreadySaved,
+                        alreadySaved,
+                        title: g.title,
+                        amount: g.lastAmount,
+                        category: g.category,
+                        day: g.day,
+                        reason: isKnownSub ? 'Abonelik / Fatura' : (g.count >= 2 ? `Ekstrede ${g.count} kez tekrarladı` : 'Geçmiş harcamalarla eşleşti')
+                    });
+                }
+            });
+
+            detectedRecurringCandidates = candidates;
+        }
+
+        function renderStatementPreview() {
+            const summaryBadge = document.getElementById('stmt-summary-badge');
+            const previewContainer = document.getElementById('stmt-preview-container');
+            const emptyHint = document.getElementById('stmt-empty-hint');
+            const confirmBtn = document.getElementById('btn-confirm-statement');
+            const recBox = document.getElementById('stmt-recurring-box');
+            const recList = document.getElementById('stmt-recurring-candidates');
+            const itemsList = document.getElementById('stmt-items-list');
+
+            if (parsedStatementItems.length === 0) {
+                summaryBadge.classList.add('hidden');
+                previewContainer.classList.add('hidden');
+                recBox.classList.add('hidden');
+                emptyHint.classList.remove('hidden');
+                emptyHint.innerHTML = 'Dosyada içe aktarılabilir harcama satırı bulunamadı.<br>Tarih, Açıklama ve Tutar sütunlarının bulunduğundan emin olun.';
+                confirmBtn.disabled = true;
+                return;
+            }
+
+            emptyHint.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
+            summaryBadge.classList.remove('hidden');
+
+            const selectedCount = parsedStatementItems.filter(i => i.selected).length;
+            const selectedTotal = parsedStatementItems.filter(i => i.selected).reduce((s, i) => s + i.amount, 0);
+            summaryBadge.textContent = `${selectedCount}/${parsedStatementItems.length} Harcama (${formatCompactCurrency(selectedTotal)})`;
+            confirmBtn.disabled = selectedCount === 0 && detectedRecurringCandidates.filter(r => r.selected).length === 0;
+
+            // Sürekli harcama adayları
+            if (detectedRecurringCandidates.length > 0) {
+                recBox.classList.remove('hidden');
+                recList.innerHTML = detectedRecurringCandidates.map((cand, idx) => `
+                    <label class="p-2.5 rounded-xl bg-white dark:bg-darkcard border border-amber-500/20 flex items-center justify-between gap-2 cursor-pointer">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <input type="checkbox" ${cand.selected ? 'checked' : ''} onchange="toggleStatementRecurring(${idx}, this.checked)" class="rounded text-amber-500 focus:ring-0">
+                            <div class="min-w-0">
+                                <div class="text-xs font-bold truncate">${cand.title}</div>
+                                <div class="text-[10px] text-slate-400 truncate">${cand.reason} • Ayın ${cand.day}'i</div>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-xs font-bold text-rose-500">${formatCompactCurrency(cand.amount)}</div>
+                            ${cand.alreadySaved ? '<span class="text-[9px] text-emerald-500 font-semibold">Kayıtlı</span>' : ''}
+                        </div>
+                    </label>
+                `).join('');
+            } else {
+                recBox.classList.add('hidden');
+            }
+
+            // Harcama satırları
+            itemsList.innerHTML = parsedStatementItems.map((item, idx) => `
+                <div class="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${item.selected ? '' : 'opacity-45'}">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleStatementItem(${idx}, this.checked)" class="rounded text-indigo-600 focus:ring-0 shrink-0">
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold truncate">${item.desc}</div>
+                            <div class="text-[11px] text-slate-400">${formatDateTR(item.date)}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between sm:justify-end gap-2 pl-6 sm:pl-0 shrink-0">
+                        <select onchange="updateStatementItemCategory(${idx}, this.value)" class="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-darkbg text-[11px] font-semibold focus:outline-none">
+                            ${EXPENSE_CATEGORIES.map(c => `<option value="${c}" ${c === item.category ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                        <span class="text-xs font-bold text-rose-500 w-24 text-right">${formatCurrency(item.amount)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleStatementItem(idx, checked) {
+            if (parsedStatementItems[idx]) {
+                parsedStatementItems[idx].selected = checked;
+                renderStatementPreview();
+            }
+        }
+
+        function updateStatementItemCategory(idx, newCategory) {
+            if (parsedStatementItems[idx]) {
+                parsedStatementItems[idx].category = newCategory;
+            }
+        }
+
+        function toggleStatementRecurring(idx, checked) {
+            if (detectedRecurringCandidates[idx]) {
+                detectedRecurringCandidates[idx].selected = checked;
+                renderStatementPreview();
+            }
+        }
+
+        function confirmStatementImport() {
+            const cardId = document.getElementById('stmt-card-select').value || 'cash';
+            const addToCardDebt = document.getElementById('stmt-update-card-debt').checked;
+            const selectedItems = parsedStatementItems.filter(i => i.selected);
+            const selectedRecurring = detectedRecurringCandidates.filter(r => r.selected);
+
+            if (selectedItems.length === 0 && selectedRecurring.length === 0) return;
+
+            appState.isDemo = false;
+            let importedTotal = 0;
+
+            selectedItems.slice().reverse().forEach(item => {
+                appState.transactions.unshift({
+                    id: generateId(),
+                    type: 'expense',
+                    amount: item.amount,
+                    category: item.category,
+                    desc: item.desc,
+                    date: item.date,
+                    paymentMethod: cardId
+                });
+                importedTotal += item.amount;
+            });
+
+            if (addToCardDebt && cardId !== 'cash' && importedTotal > 0) {
+                const card = appState.cards.find(c => c.id === cardId);
+                if (card) {
+                    card.debt = Number(card.debt) + importedTotal;
+                    card.statementDebt = (card.statementDebt !== undefined ? Number(card.statementDebt) : 0) + importedTotal;
+                    card.availableLimit = Math.max(0, Number(card.limit) - Number(card.debt));
+                }
+            }
+
+            let savedRecCount = 0;
+            const currentPeriod = getCurrentPeriodKey();
+            selectedRecurring.forEach(cand => {
+                const exists = appState.recurring.some(r => r.title.toLocaleLowerCase('tr-TR') === cand.title.toLocaleLowerCase('tr-TR'));
+                if (!exists) {
+                    appState.recurring.push({
+                        id: generateId(),
+                        type: 'expense',
+                        title: cand.title,
+                        amount: cand.amount,
+                        day: cand.day,
+                        category: cand.category,
+                        paymentMethod: cardId,
+                        lastProcessedPeriod: currentPeriod
+                    });
+                    savedRecCount++;
+                }
+            });
+
+            saveState();
+            renderAll();
+            closeModal('modal-statement');
+            showToast(`${selectedItems.length} harcama aktarıldı${savedRecCount > 0 ? ` ve ${savedRecCount} sürekli gider kaydedildi` : ''}.`);
+        }
+
+        function selectCycleDay(day) {
+            const isLast = day === 'last';
+            const normalized = isLast ? 'last' : Math.min(31, Math.max(1, Number(day) || 1));
+            document.getElementById('input-cycle-day').value = normalized;
+            document.getElementById('cycle-selected-label').textContent = isLast ? 'Ayın Son Günü (28/30/31)' : `Her ayın ${normalized}. günü`;
+
+            const { start, end } = getActiveCycleRange(normalized);
+            const startStr = start.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+            const endStr = end.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+            document.getElementById('cycle-preview-range').textContent = `${startStr} – ${endStr}`;
+
+            renderCycleCalendar(normalized);
+        }
+
+        function renderCycleCalendar(selectedDay) {
+            const grid = document.getElementById('cycle-calendar-grid');
+            const monthLabel = document.getElementById('cycle-calendar-month');
+            if (!grid) return;
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const todayDate = now.getDate();
+
+            if (monthLabel) {
+                monthLabel.textContent = now.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+            }
+
+            const firstDayOfWeek = (new Date(year, month, 1).getDay() + 6) % 7; // Pazartesi = 0
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            let html = '';
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                html += `<div></div>`;
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const isLastDayOfCurrentMonth = d === daysInMonth;
+                const isSelected = selectedDay === 'last' ? isLastDayOfCurrentMonth : d === Number(selectedDay);
+                const isToday = d === todayDate;
+                const clickArg = isLastDayOfCurrentMonth ? `'last'` : d;
+
+                const baseCls = 'h-8 rounded-lg text-xs font-semibold flex items-center justify-center transition-all cursor-pointer';
+                const stateCls = isSelected
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30 scale-105'
+                    : (isToday
+                        ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/40 hover:bg-indigo-500/25'
+                        : 'hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300');
+                html += `<button type="button" onclick="selectCycleDay(${clickArg})" title="${isLastDayOfCurrentMonth ? 'Ayın Son Günü' : d + '. gün'}" class="${baseCls} ${stateCls}">${d}</button>`;
+            }
+            grid.innerHTML = html;
         }
 
         // ================= FORM İŞLEMLERİ (CRUD) =================
@@ -1584,15 +2464,18 @@
 
         function handleRecurringSubmit(e) {
             e.preventDefault();
+            const typeInput = document.querySelector('input[name="rec-type"]:checked');
+            const type = typeInput ? typeInput.value : 'expense';
             const title = document.getElementById('rec-title').value.trim();
             const amount = parseFloat(document.getElementById('rec-amount').value) || 0;
             const day = parseInt(document.getElementById('rec-day').value, 10) || 1;
             const category = document.getElementById('rec-category').value;
-            const paymentMethod = document.getElementById('rec-payment-method').value;
+            const paymentMethod = type === 'expense' ? document.getElementById('rec-payment-method').value : 'cash';
 
             appState.isDemo = false;
             appState.recurring.push({
                 id: generateId(),
+                type,
                 title,
                 amount,
                 day,
@@ -1605,7 +2488,7 @@
             saveState();
             renderAll();
             closeModal('modal-recurring');
-            showToast('Sabit ödeme şablonu eklendi.');
+            showToast(type === 'income' ? 'Sabit gelir şablonu eklendi.' : 'Sabit gider şablonu eklendi.');
         }
 
         function processSingleRecurring(id) {
@@ -1613,11 +2496,12 @@
             if (!rec) return;
             const currentPeriod = getCurrentPeriodKey();
             if (rec.lastProcessedPeriod === currentPeriod) {
-                showToast('Bu sabit ödeme bu dönem zaten işlenmiş.');
+                showToast('Bu sabit kalem bu dönem zaten işlenmiş.');
                 return;
             }
 
-            if (rec.paymentMethod && rec.paymentMethod !== 'cash') {
+            const txType = rec.type || 'expense';
+            if (txType === 'expense' && rec.paymentMethod && rec.paymentMethod !== 'cash') {
                 const card = appState.cards.find(c => c.id === rec.paymentMethod);
                 if (card) {
                     card.debt = Number(card.debt) + Number(rec.amount);
@@ -1628,18 +2512,18 @@
 
             appState.transactions.unshift({
                 id: generateId(),
-                type: 'expense',
+                type: txType,
                 amount: Number(rec.amount),
                 category: rec.category,
-                desc: `${rec.title} (Sabit Ödeme)`,
+                desc: `${rec.title} (${txType === 'income' ? 'Sabit Gelir' : 'Sabit Gider'})`,
                 date: formatDateInput(new Date()),
-                paymentMethod: rec.paymentMethod || 'cash'
+                paymentMethod: txType === 'expense' ? (rec.paymentMethod || 'cash') : 'cash'
             });
 
             rec.lastProcessedPeriod = currentPeriod;
             saveState();
             renderAll();
-            showToast(`${rec.title} gidere işlendi.`);
+            showToast(txType === 'income' ? `${rec.title} gelire işlendi.` : `${rec.title} gidere işlendi.`);
         }
 
         function processAllDueRecurring() {
@@ -1648,7 +2532,8 @@
 
             appState.recurring.forEach(rec => {
                 if (rec.lastProcessedPeriod !== currentPeriod) {
-                    if (rec.paymentMethod && rec.paymentMethod !== 'cash') {
+                    const txType = rec.type || 'expense';
+                    if (txType === 'expense' && rec.paymentMethod && rec.paymentMethod !== 'cash') {
                         const card = appState.cards.find(c => c.id === rec.paymentMethod);
                         if (card) {
                             card.debt = Number(card.debt) + Number(rec.amount);
@@ -1658,12 +2543,12 @@
                     }
                     appState.transactions.unshift({
                         id: generateId(),
-                        type: 'expense',
+                        type: txType,
                         amount: Number(rec.amount),
                         category: rec.category,
-                        desc: `${rec.title} (Sabit Ödeme)`,
+                        desc: `${rec.title} (${txType === 'income' ? 'Sabit Gelir' : 'Sabit Gider'})`,
                         date: formatDateInput(new Date()),
-                        paymentMethod: rec.paymentMethod || 'cash'
+                        paymentMethod: txType === 'expense' ? (rec.paymentMethod || 'cash') : 'cash'
                     });
                     rec.lastProcessedPeriod = currentPeriod;
                     count++;
@@ -1672,7 +2557,7 @@
 
             saveState();
             renderAll();
-            showToast(`${count} adet sabit ödeme gider listesine eklendi.`);
+            showToast(`${count} adet sabit gelir/gider listeye işlendi.`);
         }
 
         function deleteRecurring(id) {
@@ -1684,26 +2569,35 @@
 
         function handleCycleSubmit(e) {
             e.preventDefault();
-            const day = parseInt(document.getElementById('input-cycle-day').value, 10) || 1;
-            appState.cycleStartDay = Math.min(28, Math.max(1, day));
+            const raw = document.getElementById('input-cycle-day').value;
+            if (raw === 'last') {
+                appState.cycleStartDay = 'last';
+            } else {
+                const day = parseInt(raw, 10) || 1;
+                appState.cycleStartDay = Math.min(31, Math.max(1, day));
+            }
             saveState();
             renderAll();
             closeModal('modal-cycle');
-            showToast(`Bütçe döngüsü her ayın ${appState.cycleStartDay}. gününe ayarlandı.`);
+            showToast(`Bütçe döngüsü ${formatCycleDayLabel(appState.cycleStartDay)} olarak ayarlandı.`);
         }
 
         // ================= EKRAN ÇİZİMİ (RENDER) =================
 
         function renderAll() {
             document.getElementById('demo-banner').classList.toggle('hidden', !appState.isDemo);
-            document.getElementById('header-cycle-label').textContent = `Her ayın ${appState.cycleStartDay}'i`;
+            document.getElementById('header-cycle-label').textContent = formatCycleDayLabel(appState.cycleStartDay);
 
             const currentPeriod = getCurrentPeriodKey();
             const pendingRecurring = appState.recurring.filter(r => r.lastProcessedPeriod !== currentPeriod);
             const recBanner = document.getElementById('recurring-banner');
             if (pendingRecurring.length > 0) {
-                const totalRec = pendingRecurring.reduce((s, r) => s + Number(r.amount), 0);
-                document.getElementById('recurring-banner-text').innerHTML = `Bu dönem henüz işlenmemiş <strong>${pendingRecurring.length} sabit ödemeniz</strong> (Toplam: ${formatCurrency(totalRec)}) bulunuyor.`;
+                const pendingIncome = pendingRecurring.filter(r => r.type === 'income').reduce((s, r) => s + Number(r.amount), 0);
+                const pendingExpense = pendingRecurring.filter(r => (r.type || 'expense') === 'expense').reduce((s, r) => s + Number(r.amount), 0);
+                const summaryParts = [];
+                if (pendingIncome > 0) summaryParts.push(`Gelir: +${formatCompactCurrency(pendingIncome)}`);
+                if (pendingExpense > 0) summaryParts.push(`Gider: -${formatCompactCurrency(pendingExpense)}`);
+                document.getElementById('recurring-banner-text').innerHTML = `Bu dönem henüz işlenmemiş <strong>${pendingRecurring.length} sabit kaleminiz</strong> (${summaryParts.join(' • ')}) bulunuyor.`;
                 recBanner.classList.remove('hidden');
             } else {
                 recBanner.classList.add('hidden');
@@ -1723,13 +2617,33 @@
 
         function renderDashboardStats() {
             const { start, end } = getActiveCycleRange();
+            const currentPeriod = getCurrentPeriodKey();
             const periodTxs = appState.transactions.filter(t => {
                 const d = parseLocalDate(t.date);
                 return d >= start && d <= end;
             });
 
-            const periodIncome = periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
-            const periodExpense = periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+            // Sabit Gelir & Sabit Gider (Sabit Borç) Listeleri
+            const fixedIncomeList = appState.recurring.filter(r => r.type === 'income');
+            const fixedExpenseList = appState.recurring.filter(r => (r.type || 'expense') === 'expense');
+            const totalFixedIncome = fixedIncomeList.reduce((s, r) => s + Number(r.amount), 0);
+            const totalFixedExpense = fixedExpenseList.reduce((s, r) => s + Number(r.amount), 0);
+            const fixedNet = totalFixedIncome - totalFixedExpense;
+
+            // Bu dönem henüz manuel "İşle" yapılmamış sabit gelir ve sabit giderleri hesapla
+            const unprocessedFixedIncome = fixedIncomeList
+                .filter(r => r.lastProcessedPeriod !== currentPeriod)
+                .reduce((s, r) => s + Number(r.amount), 0);
+            const unprocessedFixedExpense = fixedExpenseList
+                .filter(r => r.lastProcessedPeriod !== currentPeriod)
+                .reduce((s, r) => s + Number(r.amount), 0);
+
+            const txIncome = periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+            const txExpense = periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+
+            // Girilen sabit geliri doğrudan dönem gelirine ekle
+            const periodIncome = txIncome + unprocessedFixedIncome;
+            const periodExpense = txExpense;
             const netCash = periodIncome - periodExpense;
 
             const totalCCDebt = appState.cards.reduce((sum, c) => sum + Number(c.debt), 0);
@@ -1740,8 +2654,9 @@
             }, 0);
 
             const totalOtherDebt = appState.debts.reduce((sum, d) => sum + Number(d.remainingAmount), 0);
-            const monthlyDebtLoad = appState.debts.filter(d => Number(d.remainingAmount) > 0).reduce((sum, d) => sum + Number(d.monthlyPayment), 0);
-            const grandDebt = totalCCDebt + totalOtherDebt;
+            const monthlyDebtLoad = appState.debts.filter(d => Number(d.remainingAmount) > 0).reduce((sum, d) => sum + Number(d.monthlyPayment), 0) + totalFixedExpense;
+            // Girilen sabit borç/giderleri doğrudan en son Toplam Genel Borç tutarına ekle
+            const grandDebt = totalCCDebt + totalOtherDebt + unprocessedFixedExpense;
 
             const totalAssets = appState.assets.reduce((sum, a) => {
                 const rate = Number(appState.rates[a.type]) || 1;
@@ -1769,6 +2684,16 @@
             netWorthEl.textContent = formatCompactCurrency(netWorth);
             netWorthEl.className = `font-bold ${netWorth >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
             document.getElementById('stat-asset-count').textContent = `${appState.assets.length} Kalem`;
+
+            // Sabit Gelir & Sabit Gider Kutusu Hesaplamaları
+            document.getElementById('stat-fixed-income').textContent = formatCurrency(totalFixedIncome);
+            document.getElementById('stat-fixed-income-count').textContent = `${fixedIncomeList.length} Kalem`;
+            document.getElementById('stat-fixed-expense').textContent = formatCurrency(totalFixedExpense);
+            document.getElementById('stat-fixed-expense-count').textContent = `${fixedExpenseList.length} Kalem`;
+
+            const fixedNetEl = document.getElementById('stat-fixed-net');
+            fixedNetEl.textContent = formatCurrency(fixedNet);
+            fixedNetEl.className = `text-sm sm:text-base font-bold ${fixedNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`;
         }
 
         function renderUpcomingPayments() {
@@ -2051,25 +2976,30 @@
             const currentPeriod = getCurrentPeriodKey();
 
             if (appState.recurring.length === 0) {
-                container.innerHTML = `<div class="text-xs text-slate-400 py-6 text-center">Henüz sabit ödeme şablonu tanımlamadınız.</div>`;
+                container.innerHTML = `<div class="text-xs text-slate-400 py-6 text-center">Henüz sabit gelir veya gider şablonu tanımlamadınız.</div>`;
                 return;
             }
 
             container.innerHTML = appState.recurring.map(rec => {
                 const isDone = rec.lastProcessedPeriod === currentPeriod;
+                const isIncome = rec.type === 'income';
+                const typeBadge = isIncome
+                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-500">Sabit Gelir</span>`
+                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-500">Sabit Gider</span>`;
                 return `
                     <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-darkbg border border-slate-200/70 dark:border-darkborder flex items-center justify-between gap-3">
                         <div class="min-w-0">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <span class="text-sm font-bold truncate">${rec.title}</span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${isDone ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}">
+                                ${typeBadge}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${isDone ? 'bg-slate-200 dark:bg-slate-800 text-slate-500' : 'bg-amber-500/15 text-amber-500'}">
                                     ${isDone ? 'İşlendi' : `Ayın ${rec.day}'i`}
                                 </span>
                             </div>
-                            <div class="text-xs text-slate-400 mt-0.5">${rec.category} • ${formatCurrency(rec.amount)}</div>
+                            <div class="text-xs text-slate-400 mt-0.5">${rec.category} • <span class="font-semibold ${isIncome ? 'text-emerald-500' : 'text-rose-500'}">${isIncome ? '+' : '-'}${formatCurrency(rec.amount)}</span></div>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            ${!isDone ? `<button onclick="processSingleRecurring('${rec.id}')" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">İşle</button>` : ''}
+                            ${!isDone ? `<button onclick="processSingleRecurring('${rec.id}')" class="px-2.5 py-1.5 rounded-lg ${isIncome ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-indigo-600 hover:bg-indigo-500'} text-white text-xs font-semibold">İşle</button>` : ''}
                             <button onclick="deleteRecurring('${rec.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
@@ -2331,7 +3261,7 @@
                     if (parsed && typeof parsed === 'object') {
                         appState = {
                             isDemo: false,
-                            cycleStartDay: Number(parsed.cycleStartDay) || 1,
+                            cycleStartDay: parsed.cycleStartDay === 'last' ? 'last' : (Number(parsed.cycleStartDay) || 'last'),
                             rates: { TRY: 1, USD: 34.50, EUR: 37.20, GAU: 3050.00, ...(parsed.rates || {}) },
                             cards: Array.isArray(parsed.cards) ? parsed.cards : [],
                             installments: Array.isArray(parsed.installments) ? parsed.installments : [],
@@ -2359,6 +3289,9 @@
             const hasExisting = loadState();
             if (!hasExisting) {
                 seedDemoData();
+            } else {
+                appState.cycleStartDay = 'last';
+                saveState();
             }
             renderAll();
             fetchLiveRates(false);
